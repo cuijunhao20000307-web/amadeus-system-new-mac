@@ -1,4 +1,4 @@
-name: Import Amadeus and Build macOS
+name: Import Amadeus Source
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Import upstream source and macOS workflow
+      - name: Import upstream source
         run: |
           set -e
           git config user.name "github-actions[bot]"
@@ -23,10 +23,16 @@ jobs:
 
           tmpdir=$(mktemp -d)
           git clone --depth=1 https://github.com/ai-poet/amadeus-system-new.git "$tmpdir/upstream"
+          rm -rf "$tmpdir/upstream/.git"
 
-          find . -mindepth 1 ! -path './.git' ! -path './.git/*' -exec rm -rf {} +
+          find . -mindepth 1 \
+            ! -path './.git' \
+            ! -path './.git/*' \
+            ! -path './.github' \
+            ! -path './.github/*' \
+            -exec rm -rf {} +
+
           cp -a "$tmpdir/upstream/." .
-          rm -rf .git
           mkdir -p .github/workflows
 
           cat > .github/workflows/build-macos.yml <<'YAML'
@@ -57,6 +63,9 @@ jobs:
                   uses: pnpm/action-setup@v4
                   with:
                     version: 9
+
+                - name: Verify package.json
+                  run: ls -la && test -f package.json
 
                 - name: Install frontend deps
                   run: pnpm install --no-frozen-lockfile
@@ -95,5 +104,9 @@ jobs:
           PY
 
           git add -A
-          git commit -m "Import upstream Amadeus and add macOS build workflow"
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Import upstream Amadeus source"
+            git push
+          fi
