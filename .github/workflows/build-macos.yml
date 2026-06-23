@@ -1,0 +1,54 @@
+name: Build macOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-macos:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install frontend deps
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Install service deps
+        run: |
+          cd service
+          pnpm install --no-frozen-lockfile
+
+      - name: Build macOS arm64 app
+        run: |
+          pnpm build
+          pnpm build:api
+          npx electron-builder --mac dmg --arm64 -c.mac.identity=null -c.mac.notarize=false
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amadeus-macOS-arm64
+          path: |
+            dist_electron/*.dmg
+            dist_electron/*.zip
+            release/*.dmg
+            release/*.zip
+            dist/*.dmg
+            dist/*.zip
