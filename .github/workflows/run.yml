@@ -8,11 +8,15 @@ jobs:
   build:
     runs-on: macos-latest
 
+    defaults:
+      run:
+        working-directory: .
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 查看目录（调试用）
+      - name: 查看目录（关键）
         run: ls -R
 
       - name: Setup Node
@@ -24,22 +28,16 @@ jobs:
         run: npm install -g pnpm
 
       - name: Install deps
-        run: |
-          cd amadeus-system-new-mac
-          pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build
-        run: |
-          cd amadeus-system-new-mac
-          pnpm build
+        run: pnpm build
 
       - name: Build dmg
-        run: |
-          cd amadeus-system-new-mac
-          npx electron-builder --mac dmg --arm64
+        run: npx electron-builder --mac dmg --arm64
 
       - name: Upload dmg
         uses: actions/upload-artifact@v4
         with:
           name: mac-dmg
-          path: amadeus-system-new-mac/dist/*.dmg
+          path: dist/*.dmg
