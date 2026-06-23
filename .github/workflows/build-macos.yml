@@ -1,4 +1,4 @@
-name: FINAL FIX Build macOS
+name: FINAL ULTIMATE BUILD
 
 on:
   workflow_dispatch:
@@ -9,8 +9,7 @@ jobs:
 
     steps:
       - name: Clone source
-        run: |
-          git clone --depth=1 https://github.com/ai-poet/amadeus-system-new.git src
+        run: git clone --depth=1 https://github.com/ai-poet/amadeus-system-new.git src
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -26,7 +25,7 @@ jobs:
         working-directory: src
         run: pnpm install --no-frozen-lockfile
 
-      # ✅ 修依赖
+      # ✅ 修缺失依赖
       - name: Fix deps
         working-directory: src
         run: |
@@ -45,39 +44,37 @@ jobs:
           fs.writeFileSync('package.json', JSON.stringify(pkg,null,2));
           "
 
-      # 🔥🔥🔥 核心修复（彻底阻止递归）
-      - name: HARD FIX recursion
+      # 🔥🔥🔥 核心修复：彻底阻止递归
+      - name: HARD CLEAN (关键)
         working-directory: src
         run: |
-          node -e "
-          const fs=require('fs');
-          let pkg=JSON.parse(fs.readFileSync('package.json'));
-
-          pkg.build = {
-            appId: 'amadeus.app',
-            productName: 'Amadeus',
-            files: [
-              'dist/**/*',
-              'service/**/*',
-              'package.json'
-            ],
-            directories: {
-              buildResources: 'build'
-            }
-          };
-
-          fs.writeFileSync('package.json', JSON.stringify(pkg,null,2));
-          "
+          rm -rf dist
+          rm -rf build
+          rm -rf *.app
+          rm -rf *.dmg
 
       - name: Install service deps
         working-directory: src/service
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build App
+      # 🚀 先构建前端+后端
+      - name: Build project
         working-directory: src
         run: |
           pnpm build
           pnpm build:api
+
+      # 🔥🔥🔥 再清一次（防止 dist 被带入）
+      - name: CLEAN AGAIN (防递归)
+        working-directory: src
+        run: |
+          rm -rf dist/mac*
+          rm -rf dist/**/*.app || true
+
+      # 🚀 最终打包
+      - name: Build dmg
+        working-directory: src
+        run: |
           npx electron-builder --mac dmg --arm64
 
       - name: Upload
