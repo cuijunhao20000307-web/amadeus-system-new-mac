@@ -1,4 +1,4 @@
-name: FINAL Build macOS
+name: FINAL FIX Build macOS
 
 on:
   workflow_dispatch:
@@ -26,14 +26,13 @@ jobs:
         working-directory: src
         run: pnpm install --no-frozen-lockfile
 
-      # ✅ 修 i18n 依赖
-      - name: Fix missing deps
+      # ✅ 修依赖
+      - name: Fix deps
         working-directory: src
         run: |
-          pnpm add i18next react-i18next
-          pnpm add i18next-browser-languagedetector
+          pnpm add i18next react-i18next i18next-browser-languagedetector
 
-      # ✅ 修 notarize（关键）
+      # ✅ 修 notarize
       - name: Fix notarize
         working-directory: src
         run: |
@@ -46,31 +45,34 @@ jobs:
           fs.writeFileSync('package.json', JSON.stringify(pkg,null,2));
           "
 
-      # ✅ 修递归打包（ENAMETOOLONG关键）
-      - name: Fix build config (no recursion)
+      # 🔥🔥🔥 核心修复（彻底阻止递归）
+      - name: HARD FIX recursion
         working-directory: src
         run: |
           node -e "
           const fs=require('fs');
           let pkg=JSON.parse(fs.readFileSync('package.json'));
 
-          pkg.build = pkg.build || {};
-          pkg.build.files = [
-            'dist/**/*',
-            'service/**/*',
-            '!dist/mac/**/*',
-            '!dist/mac-arm64/**/*'
-          ];
+          pkg.build = {
+            appId: 'amadeus.app',
+            productName: 'Amadeus',
+            files: [
+              'dist/**/*',
+              'service/**/*',
+              'package.json'
+            ],
+            directories: {
+              buildResources: 'build'
+            }
+          };
 
           fs.writeFileSync('package.json', JSON.stringify(pkg,null,2));
           "
 
-      # ✅ 安装后端
       - name: Install service deps
         working-directory: src/service
         run: pnpm install --no-frozen-lockfile
 
-      # ✅ 构建
       - name: Build App
         working-directory: src
         run: |
@@ -78,7 +80,6 @@ jobs:
           pnpm build:api
           npx electron-builder --mac dmg --arm64
 
-      # ✅ 上传
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
