@@ -1,4 +1,4 @@
-name: BUILD MAC APP
+name: FINAL BUILD MAC
 
 on:
   workflow_dispatch:
@@ -12,6 +12,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: 查看目录（调试用）
+        run: ls -R
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -21,16 +24,22 @@ jobs:
         run: npm install -g pnpm
 
       - name: Install deps
-        run: pnpm install --no-frozen-lockfile
+        run: |
+          cd amadeus-system-new-mac
+          pnpm install --no-frozen-lockfile
 
       - name: Build
-        run: pnpm build
+        run: |
+          cd amadeus-system-new-mac
+          pnpm build
 
       - name: Build dmg
-        run: npx electron-builder --mac dmg --arm64
+        run: |
+          cd amadeus-system-new-mac
+          npx electron-builder --mac dmg --arm64
 
       - name: Upload dmg
         uses: actions/upload-artifact@v4
         with:
           name: mac-dmg
-          path: dist/*.dmg
+          path: amadeus-system-new-mac/dist/*.dmg
