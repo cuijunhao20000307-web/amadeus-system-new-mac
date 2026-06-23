@@ -33,6 +33,10 @@ jobs:
         working-directory: src
         run: pnpm install --no-frozen-lockfile
 
+      - name: Add missing i18n deps
+        working-directory: src
+        run: pnpm add i18next react-i18next
+
       - name: Install service deps
         working-directory: src/service
         run: pnpm install --no-frozen-lockfile
