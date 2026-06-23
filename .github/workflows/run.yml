@@ -20,23 +20,17 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
-      - name: Enter src and install
-        run: |
-          cd src
-          pnpm install --no-frozen-lockfile
+      - name: Install deps
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Build project
-        run: |
-          cd src
-          pnpm build
+      - name: Build
+        run: pnpm build
 
-      - name: Build mac dmg
-        run: |
-          cd src
-          npx electron-builder --mac dmg --arm64
+      - name: Build dmg
+        run: npx electron-builder --mac dmg --arm64
 
       - name: Upload dmg
         uses: actions/upload-artifact@v4
         with:
           name: mac-dmg
-          path: src/release/*.dmg
+          path: dist/*.dmg
