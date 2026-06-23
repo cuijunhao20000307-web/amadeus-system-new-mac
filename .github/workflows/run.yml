@@ -10,13 +10,13 @@ jobs:
 
     defaults:
       run:
-        working-directory: .
+        working-directory: src   # 🔥关键就在这
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 查看目录（关键）
+      - name: 查看目录（确认路径）
         run: ls -R
 
       - name: Setup Node
@@ -40,4 +40,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mac-dmg
-          path: dist/*.dmg
+          path: src/dist/*.dmg
