@@ -1,23 +1,16 @@
-name: 00 Build macOS
+name: FINAL Build macOS
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
 
 jobs:
   build:
     runs-on: macos-14
+
     steps:
       - name: Clone source
         run: |
           git clone --depth=1 https://github.com/ai-poet/amadeus-system-new.git src
-          cd src
-          test -f package.json
-          ls -la
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -29,41 +22,31 @@ jobs:
         with:
           version: 9
 
-      - name: Install root deps
+      - name: Install deps
         working-directory: src
         run: pnpm install --no-frozen-lockfile
 
-      - name: Add missing i18n deps
+      - name: FIX NOTARIZE (关键)
         working-directory: src
         run: |
-          pnpm add i18next react-i18next
-          pnpm add i18next-browser-languagedetector
+          node -e "
+          const fs=require('fs');
+          let pkg=JSON.parse(fs.readFileSync('package.json'));
+          if(pkg.build && pkg.build.mac){
+            delete pkg.build.mac.notarize;
+          }
+          fs.writeFileSync('package.json', JSON.stringify(pkg,null,2));
+          "
 
-      - name: Install service deps
-        working-directory: src/service
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Fix invalid config (remove notarize)
-        working-directory: src
-        run: |
-          sed -i '' '/notarize/d' package.json
-
-      - name: Build dmg
+      - name: Build App
         working-directory: src
         run: |
           pnpm build
           pnpm build:api
           npx electron-builder --mac dmg --arm64
 
-      - name: List output
-        working-directory: src
-        run: find . -maxdepth 5 -name '*.dmg' -o -name '*.zip'
-
-      - name: Upload artifact
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: Amadeus-macOS-arm64
-          path: |
-            src/**/*.dmg
-            src/**/*.zip
-          if-no-files-found: error
+          name: mac-app
+          path: src/**/*.dmg
