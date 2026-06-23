@@ -43,12 +43,17 @@ jobs:
         working-directory: src/service
         run: pnpm install --no-frozen-lockfile
 
+      - name: Fix invalid config (remove notarize)
+        working-directory: src
+        run: |
+          sed -i '' '/notarize/d' package.json
+
       - name: Build dmg
         working-directory: src
         run: |
           pnpm build
           pnpm build:api
-          npx electron-builder --mac dmg --arm64 -c.mac.identity=null -c.mac.notarize=false
+          npx electron-builder --mac dmg --arm64
 
       - name: List output
         working-directory: src
