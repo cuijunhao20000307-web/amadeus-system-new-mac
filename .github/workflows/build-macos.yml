@@ -35,7 +35,9 @@ jobs:
 
       - name: Add missing i18n deps
         working-directory: src
-        run: pnpm add i18next react-i18next
+        run: |
+          pnpm add i18next react-i18next
+          pnpm add i18next-browser-languagedetector
 
       - name: Install service deps
         working-directory: src/service
