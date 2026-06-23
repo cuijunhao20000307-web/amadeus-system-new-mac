@@ -1,24 +1,25 @@
-name: Build macOS
+name: 00 Build macOS
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
-  build-macos:
+  build:
     runs-on: macos-14
-
     steps:
-      - name: Clone upstream source
+      - name: Clone source
         run: |
-          git clone --depth=1 https://github.com/ai-poet/amadeus-system-new.git amadeus-src
-          cd amadeus-src
-          ls -la
+          git clone --depth=1 https://github.com/ai-poet/amadeus-system-new.git src
+          cd src
           test -f package.json
+          ls -la
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
@@ -28,32 +29,30 @@ jobs:
         with:
           version: 9
 
-      - name: Install frontend deps
-        working-directory: amadeus-src
+      - name: Install root deps
+        working-directory: src
         run: pnpm install --no-frozen-lockfile
 
       - name: Install service deps
-        working-directory: amadeus-src/service
+        working-directory: src/service
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build macOS arm64 app
-        working-directory: amadeus-src
+      - name: Build dmg
+        working-directory: src
         run: |
           pnpm build
           pnpm build:api
           npx electron-builder --mac dmg --arm64 -c.mac.identity=null -c.mac.notarize=false
 
-      - name: Show output files
-        working-directory: amadeus-src
-        run: |
-          find . -maxdepth 5 \( -name '*.dmg' -o -name '*.zip' -o -name '*.app' \) -print
+      - name: List output
+        working-directory: src
+        run: find . -maxdepth 5 -name '*.dmg' -o -name '*.zip'
 
-      - name: Upload macOS artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Amadeus-macOS-arm64
           path: |
-            amadeus-src/**/*.dmg
-            amadeus-src/**/*.zip
-            amadeus-src/**/*.app
+            src/**/*.dmg
+            src/**/*.zip
           if-no-files-found: error
